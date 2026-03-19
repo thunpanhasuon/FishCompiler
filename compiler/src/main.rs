@@ -9,14 +9,14 @@ fn main() {
     /* debug this out */
     println!("reading from DIR: {:?}", env::current_dir().unwrap());
 
-    let pathing = "program.fs";
+    let path = "program1.fsh";
 
-    if std::path::Path::new(pathing).exists() {
-        let lines = read(pathing);
+    if std::path::Path::new(path).exists() {
+        let lines = read(path);
         scan(lines.expect("only char allow"));
         
     } else {
-        println!("Error: Rust cannot find the file at {:?}", pathing);
+        println!("Error: Rust cannot find the file at {:?}", path);
     }
 
 }

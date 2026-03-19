@@ -4,6 +4,13 @@ use std::path::Path;
 use std::io::BufReader;
 use std::io::BufRead;
 
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum Token {
+    Number(i64),
+    Operator(char),
+}
+
+/* create tokens */
 pub fn read(path: impl AsRef<Path>) -> Result<Vec<String>, io::Error> {
     let file = File::open(path)?;
 
@@ -31,13 +38,17 @@ pub fn scan(strings: Vec<String>) {
                              break;
                          }
                      }
-                     println!("Token: Number ({})", number);
+                     let num_value: i64 = number.parse().unwrap();
+                     let tok = Token::Number(num_value);
+                     println!("Token: Number ({:?})", tok);
                 }
                 '+' | '-' | '*' | '/' => {
-                    println!("Token: Operator{}", iter.next().unwrap());
+                    let tok = Token::Operator(iter.next().unwrap());
+                    println!("Token: Operator{:?}", tok);
                 }
                 _ => {
                     println!("Error: Unknown character {}", iter.next().unwrap());
+                    break;
                 }
             }
       } 
