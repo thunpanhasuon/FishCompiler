@@ -13,7 +13,7 @@ pub enum Token {
     Eof,
 }
 
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Experssion {
     Atomic(char),
     Operation(char, Vec<Experssion>)
@@ -28,12 +28,17 @@ impl Lexer {
             tokens: Vec::new(),
         }
     }
+    pub fn load(&mut self, tokener: Vec<Token>) {
+        self.tokens = tokener; 
+        self.tokens.reverse();
+    } 
+
     pub fn next(&mut self) -> Token {
-        self.tokens.pop().unwarp_or(Token::Eof);
+        self.tokens.pop().unwrap_or(Token::Eof)
     }
 
     pub fn peek(&mut self) -> Token {
-        self.tokens.last().copied().unwrap_or(Token::Eof);
+        self.tokens.last().copied().unwrap_or(Token::Eof)
     }
 
     pub fn tokenize(&mut self, input: Vec<String>) -> Vec<Token> {
@@ -66,6 +71,8 @@ impl Lexer {
                         self.tokens.push(Token::Operator(iter.next().unwrap()));
                     }
 
+                      
+
                     _ => {
                         println!("Error: Unknown character {}", iter.next().unwrap());
                         break;                  
@@ -73,39 +80,38 @@ impl Lexer {
                 }
             }
          }
-        self.tokens.reverse();
         take(&mut self.tokens)
     }
 }
 
-fn binding_pow(operation: char) -> (f32, f32){
-    match op {
+pub fn binding_pow(operation: char) -> (f32, f32){
+    match operation {
         '+' | '-' => (1.0, 2.0),
         '*' | '/' => (3.0, 4.0),
-        _ => println!("Unknown operator {:?}", op);
+        _ => panic!("Unknown operator {:?}", operation),
     }
 }
-fn parse_experssion(lexer: &mut Lexer, min_bp: f32) -> Experssion {
+pub fn parse_experssion(lexer: &mut Lexer, min_bp: f32) -> Experssion {
     let mut left = match lexer.next() {
         Token::Atomic(c) => Experssion::Atomic(c), 
-        _ => println!("Bad token {:?}", c),
-    };  
+        t => panic!("Bad token {:?}", t),
+    };
     loop {
-        let operator = match.peek() {
+        let operator = match lexer.peek() {
             Token::Eof => return left, 
-            Token::Operation(c) => c, 
-            _ => println!("Bad token {:?}", c),
-        }
+            Token::Operator(c) => c, 
+            t => panic!("Bad token {:?}", t),
+        };
 
-        let (lbp, rbp)  = binding_pow(c);
-        if (lbp < min_bp) {
+        let (lbp, rbp)  = binding_pow(operator);
+        if lbp < min_bp {
             break;
         }
 
         lexer.next();
 
-        let right = parse_expression(lexer, rbp);
-        left = Experssion(operator, vec![left, right]);
+        let right = parse_experssion(lexer, rbp);
+        left = Experssion::Operation(operator, vec![left, right]);
     } 
     left
 }
