@@ -97,11 +97,13 @@ fn parse_experssion(lexer: &mut Lexer, min_bp: f32) -> Experssion {
             _ => println!("Bad token {:?}", c),
         }
 
-        lexer.next();
         let (lbp, rbp)  = binding_pow(c);
         if (lbp < min_bp) {
             break;
         }
+
+        lexer.next();
+
         let right = parse_expression(lexer, rbp);
         left = Experssion(operator, vec![left, right]);
     } 
