@@ -1,1 +1,1 @@
-/Users/suonthunpanha/FishCompiler/compiler/target/debug/compiler: /Users/suonthunpanha/FishCompiler/compiler/src/lexer.rs /Users/suonthunpanha/FishCompiler/compiler/src/main.rs
+/home/panhauwu/Ccompiler/compiler/target/debug/compiler: /home/panhauwu/Ccompiler/compiler/src/lexer.rs /home/panhauwu/Ccompiler/compiler/src/main.rs
