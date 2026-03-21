@@ -1,7 +1,7 @@
 mod lexer;
 mod genArm;
+use crate::genArm::cgen_arm64;
 use crate::lexer::read;
-use crate::genArm::code_gen;
 use crate::lexer::parse_experssion;
 use crate::lexer::eval;
 use std::env;
@@ -10,7 +10,7 @@ fn main() {
     
     println!("reading from DIR: {:?}", env::current_dir().unwrap());
 
-    let path = "program1.fsh";
+    let path = "program1.fh";
     
     if std::path::Path::new(path).exists() {
         let lines = read(path);
@@ -29,9 +29,10 @@ fn main() {
 
         println!("Result: {:#?}", eval);
 
-        /* can't figure out code generation  */ 
+        /* code gen */
+        cgen_arm64();
 
-        code_gen(&expr);
+
         
     } else {
         println!("Error: Rust cannot find the file at {:?}", path);
