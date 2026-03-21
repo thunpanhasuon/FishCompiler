@@ -7,7 +7,7 @@ use std::io::BufRead;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum Token {
-    Number(i64),
+    // Number(i64),
     Atomic(char),
     Operator(char),
     Eof,
@@ -70,9 +70,6 @@ impl Lexer {
                     '+' | '-' | '*'| '/' => {
                         self.tokens.push(Token::Operator(iter.next().unwrap()));
                     }
-
-                      
-
                     _ => {
                         println!("Error: Unknown character {}", iter.next().unwrap());
                         break;                  
@@ -134,7 +131,7 @@ pub fn scan(strings: Vec<String>) {
                      iter.next();
                  }
 
-                 '0'..='9' => {
+                 /* '0'..='9' => {
 
                      let mut number  = String::new();
                      while let Some(&nc) = iter.peek() {
@@ -148,6 +145,7 @@ pub fn scan(strings: Vec<String>) {
                      let tok = Token::Number(num_value);
                      println!("Token: Number ({:?})", tok);
                 }
+                */
                 '+' | '-' | '*' | '/' => {
                     let tok = Token::Operator(iter.next().unwrap());
                     println!("Token: Operator{:?}", tok);
@@ -158,5 +156,35 @@ pub fn scan(strings: Vec<String>) {
                 }
             }
       } 
+    }
+}
+
+pub fn eval(expr: &Experssion) -> i64 {
+    match expr {
+       Experssion::Atomic(c)  => {
+            if c.is_digit(10) {
+                c.to_digit(10).unwrap() as i64
+            } else {
+                panic!("Unknown atomic value {:?}", c);
+            }
+       }
+
+        Experssion::Operation(op, operand) => {
+            let left_val = eval(&operand[0]);
+            let right_val = eval(&operand[1]); 
+            match op {
+                '+' => left_val + right_val, 
+                '-' => left_val - right_val, 
+                '*' => left_val * right_val,
+                '/' => {
+                    if right_val == 0 {
+                        panic!("Eval division by zero");
+                    } 
+                    left_val / right_val
+                }
+                _ => panic!("Unknown operator {:?}", op), 
+            }
+        }
+
     }
 }
