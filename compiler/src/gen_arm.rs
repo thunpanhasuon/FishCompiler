@@ -1,4 +1,5 @@
 use crate::lexer::Experssion; 
+use std::alloc::alloc;
 use std::fs::OpenOptions;
 use std::io::Write;
 
@@ -35,6 +36,11 @@ impl ArmRegisterAllocator {
                 let digit = c.to_digit(10).expect("version 0.0.1 only support digit");
                 self.arm_instruction.push(format!("\tmov x{}, #{}", arm_res, digit));
                 arm_res 
+            }
+            Experssion::Assign(name, value) => {
+                let res = self.arm64(value);
+                self.arm_instruction.push(format!("\t; {} = x{}", name, res));
+                res
             }
             Experssion::Number(n) => {
                 let arm_res = self.allocate(); 

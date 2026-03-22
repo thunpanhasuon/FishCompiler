@@ -1,3 +1,4 @@
+use core::panic;
 use std::io;
 use std::path::Path;
 use std::mem::take;
@@ -7,6 +8,9 @@ pub enum Token {
     Atomic(char),
     Number(i64),
     Operator(char),
+    Assign,
+    /* trolling >:) */
+    Semicolon,
     Eof,
 }
 
@@ -15,8 +19,10 @@ pub enum Experssion {
     Atomic(char),
     Number(i64),
     Operation(char, Vec<Experssion>),
+    Assign(char, Box<Experssion>),
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Lexer {
     tokens: Vec<Token>,
 }
@@ -46,7 +52,7 @@ impl Lexer {
             
             while let Some(&c) = iter.peek() {
                 match c {
-                    _ if c.is_whitespace() => {
+                    ' ' | '\t' | '\n' | '\r' => {
                         iter.next();
                     }
                     '0'..='9' => {
@@ -79,8 +85,15 @@ impl Lexer {
                         self.tokens.push(Token::Atomic(iter.next().unwrap()));
 
                     }
-                    
-                    '+' | '-' | '*'| '/' => {
+                    '='  => {
+                        self.tokens.push(Token::Assign);
+                        iter.next();
+                    }
+                    '!' => { 
+                        self.tokens.push(Token::Semicolon);
+                        iter.next();
+                    }
+                    '+' | '-' | '*'| '/'  => {
                         self.tokens.push(Token::Operator(iter.next().unwrap()));
                     }
                     _ => {
@@ -114,18 +127,55 @@ pub fn binding_pow(operation: char) -> (f32, f32){
         _ => panic!("Unknown operator {:?}", operation),
     }
 }
+
+/* parsing varibale: 
+ * 
+ * lexer will look a char a head a (=) a + b
+ * lexer will eat the char a head (a=) a + b
+ * Enter recurssion
+ * 
+ * Example complex x = 10 + 4 * 5 / 2!
+ *
+ * expr(0.0)    
+ *         left = 10 
+ *         peek '+' 1.0 < 0.0 (false keep going)
+ *                    expr(2.0)
+ *                              left = 4 
+ *                              peek '*'    3.0 < 2.0 (flase keep going)
+ *                                          expr(4.0)
+ *                                                  left = 5 
+ *                                                  peek '/' 3.0 < 4.0 (true done go back up)
+ * 
+ *                                                  right = 5
+ *                                                  [*, (4, 5)]
+ *                              peek '/'
+ *                                          3.0 < 2.0
+ *                                          expr(4.0) 3.0 < 4  (true done go back up)  
+ *                                                  left = 2 
+ *                             [/, 2 (*, [4, 5])]  
+ *               
+ *     [+, 10, (/, (*, [4, 5]), 2)] 
+ */
 pub fn parse_experssion(lexer: &mut Lexer, min_bp: f32) -> Experssion {
     let mut left = match lexer.next() {
         Token::Number(value) => Experssion::Number(value),
-        Token::Atomic(c) => Experssion::Atomic(c), 
+        Token::Atomic(c) => {
+            if lexer.peek() == Token::Assign {
+              lexer.next();
+              let value = parse_experssion(lexer, 0.0); 
+               return Experssion::Assign(c, Box::new(value));
+            }
+            Experssion::Atomic(c)
+        },
         t => panic!("Bad token {:?}", t),
     };
     loop {
         let operator = match lexer.peek() {
             Token::Eof => break, 
+            Token::Number(_) | Token::Atomic(_) => break,
+            Token::Semicolon => break,
             Token::Operator(c) => c, 
-            Token::Number(_) => break,
-            Token::Atomic(_) => break,
+            t => panic!("Expected operator, found {:?}", t),
         };
 
         let (lbp, rbp)  = binding_pow(operator);
@@ -140,6 +190,18 @@ pub fn parse_experssion(lexer: &mut Lexer, min_bp: f32) -> Experssion {
     } 
     left
 }
+pub fn parse_all(lexer: &mut Lexer) -> Vec<Experssion> {
+    let mut result = Vec::new();
+
+    while lexer.peek() != Token::Eof {
+        let expr = parse_experssion(lexer, 0.0);
+        result.push(expr);
+        if lexer.peek() == Token::Semicolon {
+            lexer.next();
+        } 
+    }
+    result
+}
 
 pub fn read(path: impl AsRef<Path>) -> Result<(String, usize), io::Error> {
     let content = std::fs::read_to_string(path)?;
@@ -148,43 +210,18 @@ pub fn read(path: impl AsRef<Path>) -> Result<(String, usize), io::Error> {
 }
 /* future impermentation later  */
 
-/* pub fn scan(strings: Vec<String>) {
-     for s in strings {
-         let mut iter = s.chars().peekable();
 
-         while let Some(&c) = iter.peek() {
-             match c {
-                 _ if c.is_whitespace() => {
-                     iter.next();
-                 }
-
-                 /* '0'..='9' => {
-
-                     let mut number  = String::new();
-                     while let Some(&nc) = iter.peek() {
-                         if nc.is_numeric() { 
-                            number.push(iter.next().unwrap()); 
-                         } else {
-                             break;
-                         }
-                     }
-                     let num_value: i64 = number.parse().unwrap();
-                     let tok = Token::Number(num_value);
-                     println!("Token: Number ({:?})", tok);
-                }
-                */
-                '+' | '-' | '*' | '/' => {
-                    let tok = Token::Operator(iter.next().unwrap());
-                    println!("Token: Operator{:?}", tok);
-                }
-                _ => {
-                    println!("Error: Unknown character {}", iter.next().unwrap());
-                    break;
-                }
-            }
-      } 
-    }
-}
+/* fish compiler eval 
+* 
+* Example [+, 10, [/, [*, 4, 5], 2]]
+*          eval + [10 [/, [*, 4, 5], 2]
+*                left = 10 
+*                right = eval /, [*, 4, 5], 2
+*                        left = * eval [4, 5], 2
+*                                left = 4
+*                                right = 5
+*                        right = 2
+*                        
 */
 pub fn eval(expr: &Experssion) -> i64 {
     match expr {
@@ -197,6 +234,8 @@ pub fn eval(expr: &Experssion) -> i64 {
        }
 
         Experssion::Number(value) => { *value }
+        
+        Experssion::Assign(_name, value) => eval(value),
 
         Experssion::Operation(op, operand) => {
             let left_val = eval(&operand[0]);
