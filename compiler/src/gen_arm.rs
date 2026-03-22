@@ -1,5 +1,4 @@
 use crate::lexer::Experssion; 
-use std::alloc::alloc;
 use std::fs::OpenOptions;
 use std::io::Write;
 
@@ -9,10 +8,38 @@ pub struct ArmRegisterAllocator {
     arm_instruction: Vec<String>,
 }
 
+/* Docmantation Code Generation */
+/* 
+ *   How Do Fish Compile to Apple Silicon ? 
+*
+*    1 Fish -> to allocated 0x -> 0x7 resgister
+*    2 Fish -> mark as allocated with pop() to take the last resgiter 
+*    3 Fish -> push to reallocated the register after usully only the caller can free the resgister 
+*              Example add r1 = 10 r2 = 20
+*                          r3 = 10 + 20 
+*                          arm64() will free r1 and r2 
+*
+*    Example [+, 1, [* [2, 3] ]
+*    
+*    arm64() 
+*        match -> op + [1, [* [2, 3]] 
+*            return add r5, r4, r3 
+*                    free r4, r3 
+*
+*                  left = arm64(oprand[0]) = 1 (atomic return) mov r4, #1
+*                  right = arm64(operand[1]) = [*, [2, 3]]
+*                           left = arm64(oprand[0]) * 
+*
+*                            return mul r3, r1, r2
+*                                    free r1, r2 
+*
+*                                   left = arm64(oprand[0]) 2 (atomic return) mov r1, #2
+*                                   right = arm64(oprand[1]) 3 (atomic return) mov r2, #3
+*/
 impl ArmRegisterAllocator {
     pub fn new() -> Self {
         ArmRegisterAllocator { 
-            registers: vec![7, 6, 5, 6, 4, 3, 2, 1, 0], 
+            registers: vec![7, 6, 5, 4, 3, 2, 1, 0], 
             arm_instruction: Vec::new(),
         } 
     }
