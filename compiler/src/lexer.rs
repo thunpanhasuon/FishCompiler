@@ -1,14 +1,11 @@
-use std::fs::File;
 use std::io;
 use std::path::Path;
 use std::mem::take;
-use std::io::BufReader;
-use std::io::BufRead;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum Token {
-    // Number(i64),
     Atomic(char),
+    Number(i64),
     Operator(char),
     Eof,
 }
@@ -16,7 +13,8 @@ pub enum Token {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Experssion {
     Atomic(char),
-    Operation(char, Vec<Experssion>)
+    Number(i64),
+    Operation(char, Vec<Experssion>),
 }
 
 pub struct Lexer {
@@ -32,6 +30,7 @@ impl Lexer {
         self.tokens = tokener; 
         self.tokens.reverse();
     } 
+
 
     pub fn next(&mut self) -> Token {
         self.tokens.pop().unwrap_or(Token::Eof)
@@ -50,8 +49,22 @@ impl Lexer {
                     _ if c.is_whitespace() => {
                         iter.next();
                     }
+                    '0'..='9' => {
+                        let mut value = String::new();
+                        while let Some(&nc) = iter.peek() {
+                            if nc.is_alphanumeric() {
+                                value.push(iter.next().unwrap());
+                            } else {
+                                break; 
+                            }
+                        }
 
-                    '0'..='9' | 'a'..='z' | 'A'..='Z' => {
+                        let number: i64 = value.parse().unwrap(); 
+                        self.tokens.push(Token::Number(number));
+
+                    }
+
+                    'a'..='z' | 'A'..='Z' => {
                         /* let mut number = String::new();
                         while let Some(&nc) = iter.peek() {
                            if nc.is_alphanumeric() {
@@ -81,6 +94,19 @@ impl Lexer {
     }
 }
 
+pub fn pipeline(path: impl AsRef<Path>) -> Result<Lexer, io::Error> {
+    let (source_code, line_count) = read(path)?;
+    println!("Read {} lines", line_count);
+
+    let mut lexer = Lexer::new();
+    let tokens = lexer.tokenize(vec![source_code]);
+
+    lexer.load(tokens); 
+
+    /* return the tokenize token lexer */
+    Ok(lexer)
+
+}
 pub fn binding_pow(operation: char) -> (f32, f32){
     match operation {
         '+' | '-' => (1.0, 2.0),
@@ -90,14 +116,16 @@ pub fn binding_pow(operation: char) -> (f32, f32){
 }
 pub fn parse_experssion(lexer: &mut Lexer, min_bp: f32) -> Experssion {
     let mut left = match lexer.next() {
+        Token::Number(value) => Experssion::Number(value),
         Token::Atomic(c) => Experssion::Atomic(c), 
         t => panic!("Bad token {:?}", t),
     };
     loop {
         let operator = match lexer.peek() {
-            Token::Eof => return left, 
+            Token::Eof => break, 
             Token::Operator(c) => c, 
-            t => panic!("Bad token {:?}", t),
+            Token::Number(_) => break,
+            Token::Atomic(_) => break,
         };
 
         let (lbp, rbp)  = binding_pow(operator);
@@ -113,12 +141,10 @@ pub fn parse_experssion(lexer: &mut Lexer, min_bp: f32) -> Experssion {
     left
 }
 
-pub fn read(path: impl AsRef<Path>) -> Result<Vec<String>, io::Error> {
-    let file = File::open(path)?;
-
-    let reader = BufReader::new(file);
-   
-    reader.lines().collect()
+pub fn read(path: impl AsRef<Path>) -> Result<(String, usize), io::Error> {
+    let content = std::fs::read_to_string(path)?;
+    let line =  content.lines().count();
+    Ok((content, line))
 }
 /* future impermentation later  */
 
@@ -169,6 +195,8 @@ pub fn eval(expr: &Experssion) -> i64 {
                 panic!("Unknown atomic value {:?}", c);
             }
        }
+
+        Experssion::Number(value) => { *value }
 
         Experssion::Operation(op, operand) => {
             let left_val = eval(&operand[0]);

@@ -36,6 +36,12 @@ impl ArmRegisterAllocator {
                 self.arm_instruction.push(format!("\tmov x{}, #{}", arm_res, digit));
                 arm_res 
             }
+            Experssion::Number(n) => {
+                let arm_res = self.allocate(); 
+                self.arm_instruction.push(format!("\tmov x{}, #{}", arm_res, n));
+                arm_res
+
+            }
             Experssion::Operation(op, operands) => {
                 let left = self.arm64(&operands[0]);
                 let right = self.arm64(&operands[1]);
@@ -81,7 +87,6 @@ _main:
     }
     
     let program_load_exit = r#"
-    mov x0, #0
     mov x16, #1
     svc #0x80
     "#;

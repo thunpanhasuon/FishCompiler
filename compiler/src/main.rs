@@ -1,38 +1,39 @@
 mod lexer;
 mod gen_arm;
+
 use crate::gen_arm::ArmRegisterAllocator;
 use crate::gen_arm::cgen_arm64;
-use crate::lexer::read;
+use crate::lexer::pipeline;
 use crate::lexer::parse_experssion;
 use crate::lexer::eval;
+
+use std::path::Path;
 use std::env;
 
+/* todo Panha can you handle 2 line or multiple line read and parse all the expression without a oneliner */
 fn main() {
     
     println!("reading from DIR: {:?}", env::current_dir().unwrap());
-
     let path = "program1.fh";
-    
-    if std::path::Path::new(path).exists() {
-        let lines = read(path);
-        let mut lexer_parse = lexer::Lexer::new();
-        let tokens = lexer_parse.tokenize(lines.expect("only char allow"));
+    if Path::new(path).exists() {
+        /* parser pipeline */
+        let mut parser = pipeline(path).expect("Failed to read file");
 
-        let mut parser = lexer::Lexer::new(); 
-        parser.load(tokens);
+        /* build ast */
+        let expr = parse_experssion(&mut parser,0.0);
 
-        let expr = parse_experssion(&mut parser, 0.0);
-
+        /* eval */
         let _eval = eval(&expr);
 
-        let mut alloc = ArmRegisterAllocator::new();
-        let result_reg = alloc.arm64(&expr);
-        alloc.free(result_reg);
-        
+        /* magic :) */
+        let mut alloc = ArmRegisterAllocator::new(); 
+        let result_res = alloc.arm64(&expr);
+        alloc.free(result_res);
+
         let _ = cgen_arm64(&alloc.arm64_instruction());
 
     } else {
-        println!("Error: Rust cannot find the file at {:?}", path);
+        println!("Error: cannot find file at {:?}", path);
     }
 
 }
