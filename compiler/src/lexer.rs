@@ -71,17 +71,6 @@ impl Lexer {
                     }
 
                     'a'..='z' | 'A'..='Z' => {
-                        /* let mut number = String::new();
-                        while let Some(&nc) = iter.peek() {
-                           if nc.is_alphanumeric() {
-                               number.push(iter.next().unwrap());
-                           } else {
-                            break;
-                           }
-                        }
-                        let num_value: i64 = number.parse().unwrap();
-                        self.tokens.push(Token::Number(num_value));
-                        */
                         self.tokens.push(Token::Atomic(iter.next().unwrap()));
 
                     }
