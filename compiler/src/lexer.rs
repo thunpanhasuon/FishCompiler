@@ -120,8 +120,9 @@ pub fn read(path: impl AsRef<Path>) -> Result<Vec<String>, io::Error> {
    
     reader.lines().collect()
 }
+/* future impermentation later  */
 
-pub fn scan(strings: Vec<String>) {
+/* pub fn scan(strings: Vec<String>) {
      for s in strings {
          let mut iter = s.chars().peekable();
 
@@ -158,7 +159,7 @@ pub fn scan(strings: Vec<String>) {
       } 
     }
 }
-
+*/
 pub fn eval(expr: &Experssion) -> i64 {
     match expr {
        Experssion::Atomic(c)  => {

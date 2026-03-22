@@ -5,8 +5,14 @@
 .p2align	2
 .global _main 
 _main:
-    
-        mov x0, #0
-        mov x16, #1
-        svc #0x80
+
+	mov x0, #2
+	mov x1, #3
+	mul x2, x0, x1
+	mov x1, #1
+	add x0, x2, x1
+
+    mov x0, #0
+    mov x16, #1
+    svc #0x80
     
