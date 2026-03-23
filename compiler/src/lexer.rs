@@ -5,6 +5,8 @@ use std::mem::take;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum Token {
+    ComputerCompute,
+
     Atomic(char),
     Number(i64),
     Operator(char),
@@ -70,9 +72,29 @@ impl Lexer {
 
                     }
 
-                    'a'..='z' | 'A'..='Z' => {
-                        self.tokens.push(Token::Atomic(iter.next().unwrap()));
+                    'A'..='Z' => {
 
+                        let mut str =  String::new();
+                        while let Some(&nc) = iter.peek()  {
+                            if nc.is_alphabetic() {
+                            str.push(iter.next().unwrap());
+                            } else {
+                                break;
+                            }
+                        } 
+                         
+
+                        match str.as_ref() {
+                            "FISHCOMPUTE" => { 
+                                self.tokens.push(Token::ComputerCompute); 
+                                iter.next(); 
+                            }
+                            _ => println!("Unknown keyword"),
+                        };
+
+                    }
+                    'a'..='z' => {
+                        self.tokens.push(Token::Atomic(iter.next().unwrap()));
                     }
                     '='  => {
                         self.tokens.push(Token::Assign);
@@ -148,20 +170,28 @@ pub fn binding_pow(operation: char) -> (f32, f32){
 pub fn parse_experssion(lexer: &mut Lexer, min_bp: f32) -> Experssion {
     let mut left = match lexer.next() {
         Token::Number(value) => Experssion::Number(value),
-        Token::Atomic(c) => {
-            if lexer.peek() == Token::Assign {
-              lexer.next();
-              let value = parse_experssion(lexer, 0.0); 
-               return Experssion::Assign(c, Box::new(value));
+        Token::ComputerCompute => {
+            if let Token::Atomic(c) = lexer.peek() {
+                lexer.next();
+                if lexer.peek() == Token::Assign {
+                    lexer.next();
+                    let value = parse_experssion(lexer, 0.0); 
+                    println!("where is c {}", c);
+                    return Experssion::Assign(c, Box::new(value));
+                } else {
+                    Experssion::Atomic(c)
+                }
+            } else {
+                panic!("Wopp");                
             }
-            Experssion::Atomic(c)
-        },
-        t => panic!("Bad token {:?}", t),
+        }
+        t => panic!("Expected operator, found {:?}", t),
     };
+
     loop {
         let operator = match lexer.peek() {
             Token::Eof => break, 
-            Token::Number(_) | Token::Atomic(_) => break,
+            //Token::Number(_) | Token::Atomic(_) => break,
             Token::Semicolon => break,
             Token::Operator(c) => c, 
             t => panic!("Expected operator, found {:?}", t),

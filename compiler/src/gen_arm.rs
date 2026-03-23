@@ -66,6 +66,7 @@ impl ArmRegisterAllocator {
             }
             Experssion::Assign(name, value) => {
                 let res = self.arm64(value);
+                println!("Debugging {}", name);
                 self.arm_instruction.push(format!("\t; {} = x{}", name, res));
                 res
             }

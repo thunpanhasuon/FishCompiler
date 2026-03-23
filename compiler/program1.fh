@@ -1,2 +1,2 @@
-x = 2 * 3 + 1!
-y = 30 + 50!
+FISHCOMPUTE x = 2 * 3 + 1!
+FISHCOMPUTE y = 30 + 50!
