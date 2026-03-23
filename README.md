@@ -6,11 +6,8 @@
 ![Built With](https://img.shields.io/badge/built%20with-Rust-blue?style=for-the-badge&logo=rust)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
----
 
-**Fish** is a tiny language that does one thing — math. You write an expression, Fish compiles it, and spits out **Apple Silicon assembly (ARM64)**. That's it. Built for fun and learning at RUPP.
-
----
+**Fish** is a toys and compile programing language that does one thing — math. You write an expression, Fish compiles it, and spits out **Apple Silicon assembly (ARM64)**. That's it. Built for fun and learning at RUPP.
 
 ## What Fish Can Do
 
@@ -22,8 +19,6 @@ FISHCOMPUTE y = 2 + 2 * 3 / 4!
 FISHCOMPUTE z = 200 - 321 / 3110!
 FISHCOMPUTE v = 200 + 323!
 ```
-
----
 
 ## Output — Apple Assembly (ARM64)
 
@@ -51,5 +46,3 @@ _main:
 ```
 
 The result respects **operator precedence** — `*` and `/` happen before `+` and `-`.
-
----
