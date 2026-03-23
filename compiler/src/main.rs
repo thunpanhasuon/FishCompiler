@@ -19,9 +19,6 @@ fn main() {
         /* parser pipeline */
         let mut parser = pipeline(path).expect("Failed to read file");
 
-        /* build ast */
-        //let expr = parse_experssion(&mut parser,0.0);
-
 
         /* build ast && eval */
         let exprs = parse_all(&mut parser);
